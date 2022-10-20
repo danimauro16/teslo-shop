@@ -1,12 +1,16 @@
+import { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import { Box, Button, Chip, Grid, Typography } from "@mui/material";
 import { ProductSlideshow, SizeSelector } from "../../components/products";
 import { ItemCounter } from "../../components/ui/ItemCouter";
 import { ShopLayout } from "../../components/layouts";
-import { initialData } from "../../database/products";
+import { dbProducts } from "../../database";
+import { IProduct } from "../../interfaces";
 
-const product = initialData.products[0];
+interface Props {
+  product: IProduct;
+}
 
-const ProductPage = () => {
+const ProductPage: NextPage<Props> = ({ product }) => {
   return (
     <ShopLayout title={product.title} pageDescription={product.description}>
       <Grid container spacing={3}>
@@ -47,4 +51,64 @@ const ProductPage = () => {
   );
 };
 
+// You should use getServerSideProps when:
+// - Only if you need to pre-render a page whose data must be fetched at request time
+// export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+//   const { slug = "" } = params as { slug: string };
+//   const product = await dbProducts.getProductBySlug(slug);
+
+//   if (!product) {
+//     return {
+//       redirect: {
+//         destination: '/',
+//         permanent: false
+//       }
+//     }
+//   }
+
+//   return {
+//     props: {
+//       product,
+//     },
+//   };
+// };
+
+export const getStaticPaths: GetStaticPaths = async (ctx) => {
+  
+  const productSlugs = await dbProducts.getAllProductSlugs();
+  
+  return {
+    paths: productSlugs.map( ({ slug }) => ({
+      params: {
+        slug
+      }
+    })),
+    fallback: 'blocking'
+  }
+}
+
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  
+  const { slug = '' } = params as { slug: string };
+  const product = await dbProducts.getProductBySlug( slug );
+
+  if ( !product ) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false
+      }
+    }
+  }
+
+  return {
+    props: {
+      product
+    },
+    revalidate: 60 * 60 * 24
+  }
+}
+
 export default ProductPage;
+
+
