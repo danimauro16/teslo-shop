@@ -1,16 +1,47 @@
+import { useState, useContext } from "react";
 import { GetStaticPaths, GetStaticProps, NextPage } from "next";
+import { useRouter } from "next/router";
 import { Box, Button, Chip, Grid, Typography } from "@mui/material";
+import { CartContext } from "../../context";
 import { ProductSlideshow, SizeSelector } from "../../components/products";
 import { ItemCounter } from "../../components/ui/ItemCouter";
 import { ShopLayout } from "../../components/layouts";
 import { dbProducts } from "../../database";
-import { IProduct } from "../../interfaces";
+import { ICartProduct, IProduct, ISize } from "../../interfaces";
 
 interface Props {
   product: IProduct;
 }
 
 const ProductPage: NextPage<Props> = ({ product }) => {
+  const router = useRouter();
+  const { addProductToCart } = useContext(CartContext);
+
+  const [tempCartProduct, setTempCartProduct] = useState<ICartProduct>({
+    _id: product._id,
+    image: product.images[0],
+    price: product.price,
+    size: undefined,
+    slug: product.slug,
+    title: product.title,
+    gender: product.gender,
+    quantity: 1,
+  });
+
+  const selectedSize = (size: ISize) => {
+    setTempCartProduct((currentProduct) => ({ ...currentProduct, size }));
+  };
+
+  const onUpdateQuantity = (quantity: number) => {
+    setTempCartProduct((currentProduct) => ({ ...currentProduct, quantity }));
+  };
+
+  const onAddProduct = () => {
+    if (!tempCartProduct.size) return;
+    addProductToCart(tempCartProduct);
+    router.push("/cart");
+  };
+
   return (
     <ShopLayout title={product.title} pageDescription={product.description}>
       <Grid container spacing={3}>
@@ -30,16 +61,28 @@ const ProductPage: NextPage<Props> = ({ product }) => {
 
             <Box sx={{ my: 2 }}>
               <Typography variant="subtitle2">Amount</Typography>
-              <ItemCounter />
+              <ItemCounter
+                currentValue={tempCartProduct.quantity}
+                updateQuantity={onUpdateQuantity}
+                maxValue={product.inStock}
+              />
               <SizeSelector
-                // selectedSize={ product.sizes[2] }
+                onSelectedSize={selectedSize}
+                selectedSize={tempCartProduct.size}
                 sizes={product.sizes}
               />
             </Box>
-            <Button color="secondary" className="circular-btn">
-              Add to cart
-            </Button>
-            {/* <Chip label="No hay disponibles" color="error" variant='outlined' /> */}
+            {product.inStock > 0 ? (
+              <Button
+                color="secondary"
+                className="circular-btn"
+                onClick={onAddProduct}
+              >
+                {tempCartProduct.size ? "Add to cart" : "Select a size"}
+              </Button>
+            ) : (
+              <Chip label="Not available" color="error" variant="outlined" />
+            )}
             <Box sx={{ mt: 3 }}>
               <Typography variant="subtitle2">Description</Typography>
               <Typography variant="body2">{product.description}</Typography>
@@ -74,41 +117,37 @@ const ProductPage: NextPage<Props> = ({ product }) => {
 // };
 
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
-  
   const productSlugs = await dbProducts.getAllProductSlugs();
-  
+
   return {
-    paths: productSlugs.map( ({ slug }) => ({
+    paths: productSlugs.map(({ slug }) => ({
       params: {
-        slug
-      }
+        slug,
+      },
     })),
-    fallback: 'blocking'
-  }
-}
+    fallback: "blocking",
+  };
+};
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  
-  const { slug = '' } = params as { slug: string };
-  const product = await dbProducts.getProductBySlug( slug );
+  const { slug = "" } = params as { slug: string };
+  const product = await dbProducts.getProductBySlug(slug);
 
-  if ( !product ) {
+  if (!product) {
     return {
       redirect: {
-        destination: '/',
-        permanent: false
-      }
-    }
+        destination: "/",
+        permanent: false,
+      },
+    };
   }
 
   return {
     props: {
-      product
+      product,
     },
-    revalidate: 60 * 60 * 24
-  }
-}
+    revalidate: 60 * 60 * 24,
+  };
+};
 
 export default ProductPage;
-
-
