@@ -14,8 +14,10 @@ type FormData = {
 };
 
 const LoginPage = () => {
-  const router = useRouter();
   const { loginUser } = useContext(AuthContext);
+  const router = useRouter();
+  const destination = router.query.p?.toString() || '/';
+
   const {
     register,
     handleSubmit,
@@ -31,7 +33,7 @@ const LoginPage = () => {
       setTimeout(() => setShowError(false), 5000);
       return;
     }
-    router.replace("/");
+    router.replace(destination);
   };
 
   return (
@@ -98,7 +100,7 @@ const LoginPage = () => {
             </Grid>
 
             <Grid item xs={12} display="flex" justifyContent="end">
-              <NextLink href="/auth/register" passHref>
+              <NextLink href={`/auth/register?p=${destination}`} passHref>
                 <Link underline="always">Do not have an account?</Link>
               </NextLink>
             </Grid>

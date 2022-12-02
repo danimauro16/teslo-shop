@@ -55,21 +55,21 @@ export const Navbar = () => {
           <NextLink href="/category/men" passHref>
             <Link>
               <Button color={asPath === "/category/men" ? "primary" : "info"}>
-                Hombres
+                Men
               </Button>
             </Link>
           </NextLink>
           <NextLink href="/category/women" passHref>
             <Link>
               <Button color={asPath === "/category/women" ? "primary" : "info"}>
-                Mujeres
+                Women
               </Button>
             </Link>
           </NextLink>
           <NextLink href="/category/kid" passHref>
             <Link>
               <Button color={asPath === "/category/kid" ? "primary" : "info"}>
-                Niños
+                Kids
               </Button>
             </Link>
           </NextLink>
@@ -127,7 +127,7 @@ export const Navbar = () => {
           </Link>
         </NextLink>
 
-        <Button onClick={toggleSideMenu}>Menú</Button>
+        <Button onClick={toggleSideMenu}>Menu</Button>
       </Toolbar>
     </AppBar>
   );
